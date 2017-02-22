@@ -1,0 +1,10 @@
+celery[redis]
+django
+
+#configure celery backend be django-db
+django-celery-results
+
+#database-backed periodic tasks with admin interface
+django-celery-beat
+
+ipython
