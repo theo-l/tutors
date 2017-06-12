@@ -1,5 +1,5 @@
 celery[redis]
-django
+Django == 1.11.2
 
 #configure celery backend be django-db
 django-celery-results
@@ -8,3 +8,7 @@ django-celery-results
 django-celery-beat
 
 ipython
+
+
+Fabric3
+fabtools
