@@ -9,6 +9,8 @@ Here is the configuration file to configurate requirement dependencies
 """
 import six
 import platform
+from subprocess import call
+import os
 from fabric.api import run, cd
 
 pkg_tools = {
@@ -61,7 +63,7 @@ class OSRequirement(Requirement):
         super(OSRequirement, self).__init__(*args, **kwargs)
 
     def _init_pkg_tool(self):
-        dist = platform.linux_distribution()
+        dist = platform.dist()
         self.pkg_tool = pkg_tools[dist[0]]
         self.install_cmd = 'sudo {} install '.format(self.pkg_tool)
         self.uninstall_cmd = 'sudo {} remove '.format(self.pkg_tool)
@@ -91,20 +93,49 @@ class PYRequirement(Requirement):
             self.using_virtual_env = True
             # todo here is the place to config python virtual env
             self.virtualenv_path = self._virtualenv_config['virtualenv_path']
-            pass
+
+            if os.path.exists(self.virtualenv_path):
+                raise Exception("The file or directory: {} already exist!".format(self.virtualenv_path))
+
+            home = os.environ.get('HOME')
+
+            pyenv_path = '{}/.pyenv'.format(home)
+
+            if os.path.exists(pyenv_path):
+                return
+
+            # clone the pyenv repository to local
+            call('git clone https://github.com/pyenv/pyenv.git {}'.format(pyenv_path))
+            config_file = self._get_shell_config_file(home)
+
+            # configure pyenv in the startup shell configuration file
+            call('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> {}'.format(config_file), shell=True)
+            call('echo \'export PATH="$PYENV_ROOT/bin:$PATH"\' >> {}'.format(config_file), shell=True)
+            call('echo \'eval "$(pyenv init -)"\' >> {}'.format(config_file), shell=True)
+
+
+
+    def _get_shell_config_file(self, home):
+        shell = os.environ.get('SHELL').split('/')[-1]
+        shell_config_map = {
+            'bash':'{}/.bashrc'.format(home),
+            'zsh':'{}/.zshenv'.format(home),
+        }
+        return shell_config_map[shell]
+
 
     def _init_pkg_tool(self):
         self.install_cmd = 'pip install ' if self.using_virtual_env else 'sudo pip install '
         self.uninstall_cmd = ' pip uninstall ' if self.using_virtual_env else 'sudo pip uninstall '
 
-    def install(self):
+    def install(self, name=None):
         if self.using_virtual_env:
             with cd(self.virtualenv_path):
-                super(PYRequirement, self).install()
-        super(PYRequirement, self).install()
+                super(PYRequirement, self).install(name)
+        super(PYRequirement, self).install(name)
 
-    def uninstall(self):
+    def uninstall(self, name=None):
         if self.using_virtual_env:
             with cd(self.virtualenv_path):
-                super(PYRequirement, self).uninstall()
-        super(PYRequirement, self).uninstall()
+                super(PYRequirement, self).uninstall(name)
+        super(PYRequirement, self).uninstall(name)
