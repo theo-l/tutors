@@ -1,5 +1,7 @@
 celery[redis]
 Django == 1.11.2
+django-extensions == 1.6.7
+Pillow == 4.2.1
 
 #configure celery backend be django-db
 django-celery-results
