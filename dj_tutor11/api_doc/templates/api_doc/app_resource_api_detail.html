@@ -1,0 +1,54 @@
+{% extends "api_doc/base.html" %}
+
+{% block extra_head %}
+<title>Application Resource API Detail</title>
+{% endblock extra_head %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><a href="{% url "app-list" %}">Home</a></li>
+    <li><a href="{% url "app-resource-list" obj.app.pk|stringformat:'s' %}">应用名:{{ obj.app.name}}</a></li>
+    <li><a href="{% url "app-resource-api-list" obj.app.pk|stringformat:'s' obj.resource_name %}">资源名:{{ obj.resource_name }}</a></li>
+    <li><a href="#">请求URL:{{ obj.desc }}</a></li>
+</ol>
+{% endblock breadcrumb %}
+
+{% block content %}
+{% with api_detail=obj.details %}
+<h2>API 简介</h2>
+<hr>
+<div class="col-sm-offset-2 col-md-offset-1">
+<p><span class="label label-info lb-sm">应用名</span> <strong>{{ api_detail.app }}</strong></p>
+<p><span class="label label-info lb-sm">API描述</span> <strong>{{ api_detail.description }}</strong></p>
+<p><span class="label label-info lb-sm">请求方法</span> <strong>{{ api_detail.usage|safe }}</strong></p>
+<p><span class="label label-info lb-sm">是否验证？</span> <strong>{{ api_detail.is_auth_required }}</strong></p>
+<p><span class="label label-info lb-sm">版本号</span> <strong>{{ api_detail.version }}</strong></p>
+<p><span class="label label-info lb-sm">请求参数</span></p>
+{% if api_detail.requests %}
+<ul class="list-group">
+    {% for req in api_detail.requests %}
+        <li class="list-group-item list-group-item-info">
+        {% if req.is_required %} 必要参数 {% else %} 可选参数 {% endif %}
+        {{ req.parameter.name }} : < {{ req.parameter.get_parameter_type_display }} >  #{{ req.note }}#
+        </li>
+    {% endfor %}
+</ul>
+{% else %}
+    <p><strong>None</strong></p>
+{% endif %}
+<p><span class="label label-info lb-sm">返回数据</span></p>
+{% if api_detail.results %}
+<ul class="list-group">
+    {% for req in api_detail.results %}
+        <li class="list-group-item list-group-item-success">
+        {% if req.is_required %} 必要字段{% else %} 可选字段 {% endif %}
+        {{ req.parameter.name }} : < {{ req.parameter.get_parameter_type_display }} >  #{{ req.note }}#
+        </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p><strong>None</strong></p>
+{% endif %}
+</div>
+{% endwith %}
+{% endblock content %}

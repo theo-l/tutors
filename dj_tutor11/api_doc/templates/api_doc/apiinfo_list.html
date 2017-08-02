@@ -1,0 +1,74 @@
+{% extends "api_doc/base.html" %}
+
+{% block extra_head %}
+   <title>API Document</title>
+{% endblock extra_head %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><a href="#">Home</a></li>
+</ol>
+{% endblock breadcrumb %}
+
+
+{% block content %}
+<form action="{% url "app-list" %}" class="navbar-right navbar-form" role="form">
+    <div class="form-group">
+        <input type="text" class="form-control" name="q" value="{% if q %} {{ q }} {% endif %}" placeholder="应用名，资源名，API描述">
+    </div>
+    应用名:
+    <div class="form-group">
+        <select name="app__pk" class="form-control">
+            <option value="">------</option>
+            {% for app in apps %}
+            <option value="{{ app.pk|stringformat:'s' }}" {% if app.pk|stringformat:'s' == app__pk %} selected
+            {% endif %}>{{ app.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    资源名:
+    <div class="form-group">
+        <select name="resource_name" class="form-control">
+            <option value="">------</option>
+            {% for resource in resources %}
+            <option value="{{ resource }}" {% if resource == resource_name %}selected
+            {% endif %}>{{ resource}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>应用名</th>
+            <th>资源名</th>
+            <th>API描述</th>
+            <th>请求方法</th>
+            <th>请求URL</th>
+            <th>是否验证?</th>
+            <th>版本号</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for api in objects %}
+        <tr>
+            <td>{{ api.app.name }}</td>
+            <td>{{ api.resource_name }}</td>
+            <td>{{ api.desc }}</td>
+            <td>{{ api.get_method }}</td>
+            <td><a href="{% url "app-list" api.pk %}"> {{ api.endpoint }}</a></td>
+            <td>
+            {% if api.is_auth_required %}
+               <span class="glyphicon glyphicon-ok" style="color:green"></span>
+               {% else %}
+               <span class="glyphicon glyphicon-remove" style="color:red"></span>
+            {% endif %}
+            <td>{{ api.version }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% include 'api_doc/pagination.html' with objs=objects %}
+{% endblock content %}

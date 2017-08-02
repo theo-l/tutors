@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!--
+@Author: theo-l
+@Date:   2017-07-10 10:20:23
+@Last Modified by:   theo-l
+@Last Modified time: 2017-07-11 15:01:26
+-->
+
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <!-- insert extra html header to the page -->
+        {% block extra_head %}
+
+        {% endblock extra_head %}
+
+        <!-- define some extra js/css files here -->
+        {% block head_static %}
+
+        {% endblock head_static %}
+
+    </head>
+    <body>
+    {% block top_nav %}
+    {% endblock top_nav %}
+
+    <div class="container-fluid">
+        <div class="row">
+                {% block content %}
+                {% endblock content %}
+        </div>
+    </div>
+
+
+    {% block footer %}
+    {% endblock footer %}
+
+    <!-- define delay load static files here -->
+    {% block body_static %}
+
+    {% endblock body_static %}
+    </body>
+</html>

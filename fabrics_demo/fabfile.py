@@ -16,16 +16,16 @@ HOST_CONFIGS = [
 
 # System software dependencies
 OS_REQUIREMENTS = (
-    'nginx',
+#    'nginx',
     'git',
-    'python-dev',
-    'python3-dev',
-    'python-pip',
-    'python3-pip'
+#    'python-dev',
+#    'python3-dev',
+#    'python-pip',
+#    'python3-pip'
 )
 
 Python_requirement = (
-    'Django==1.10',
+#    'Django==1.10',
 )
 
 python_virtualenv = {
@@ -84,7 +84,6 @@ def upgrade_prod_hosts():
 def setup_Prod():
     os_require.install()
 
-,qa
 @task
 @hosts(config.prod_hosts)
 def reset_Prod():

@@ -1,0 +1,27 @@
+{
+	"build_systems":
+	[
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"python\" -u \"$file\""
+		}
+	],
+	"folders":
+	[
+		{
+			"path": "."
+		},
+		{
+			"path": "/home/liang/projects/django_common"
+		},
+		{
+			"path": "/home/liang/.pyenv/versions/3.6.0/lib/python3.6/site-packages/django"
+		}
+	],
+	"settings":
+	{
+		"tab_size": 4
+	}
+}

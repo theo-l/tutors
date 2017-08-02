@@ -1,0 +1,14 @@
+{% extends "api_doc/base.html" %}
+
+{% block content %}
+    <form class="form" action=" {% if object %} {% url "app-list" object.pk %} {% else %} {% url "app-list" %} {% endif %} " method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+           {{ field.label_tag }} {{ field }}
+           {{ field.errors }}
+           </div>
+        {% endfor %}
+        <button type="commit" class="btn btn-default">Commit</button>
+    </form>
+{% endblock content %}
