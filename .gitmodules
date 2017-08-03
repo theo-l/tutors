@@ -1,0 +1,3 @@
+[submodule "dj_tutor11/common"]
+	path = dj_tutor11/common
+	url = https://github.com/theo-l/django_common
