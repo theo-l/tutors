@@ -37,6 +37,7 @@
         </select>
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
+    <a href="{{ new_detail_url }}" class="btn btn-primary">Add</a>
 </form>
 <table class="table table-hover">
     <thead>
@@ -57,7 +58,7 @@
             <td>{{ api.resource_name }}</td>
             <td>{{ api.desc }}</td>
             <td>{{ api.get_method }}</td>
-            <td><a href="{% url "url_name" api.pk %}"> {{ api.endpoint }}</a></td>
+            <td><a href="{{ detail_url_prefix}}{{ api.pk }}/"> {{ api.endpoint }}</a></td>
             <td>
             {% if api.is_auth_required %}
                <span class="glyphicon glyphicon-ok" style="color:green"></span>
@@ -70,5 +71,5 @@
     </tbody>
 </table>
 
-{% include 'api_doc/pagination.html' with objs=objects %}
+{% include 'api_doc/pagination.html' with objs=page_obj %}
 {% endblock content %}

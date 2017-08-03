@@ -1,7 +1,7 @@
 {% extends "api_doc/base.html" %}
 
 {% block content %}
-    <form class="form" action=" {% if object %} {% url "app-list" object.pk %} {% else %} {% url "app-list" %} {% endif %} " method="post">
+    <form class="form" action=" {{ form_action }} " method="post">
         {% csrf_token %}
         {% for field in form %}
             <div class="form-group">

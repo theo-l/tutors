@@ -4,7 +4,7 @@
 import json
 from django.db import models
 from common.models import BaseModel
-from common.choices import HttpMethodChoice, APIValueType
+from .choices import HttpMethodChoice, APIValueType
 # Create your models here.
 
 

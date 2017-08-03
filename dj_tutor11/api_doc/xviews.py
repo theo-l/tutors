@@ -2,18 +2,18 @@
 # @Author: theo-l
 # @Date:   2017-08-01 07:55:46
 # @Last Modified by:   theo-l
-# @Last Modified time: 2017-08-02 22:17:02
+# @Last Modified time: 2017-08-03 09:07:44
 import six
 
 from django.conf.urls import url
 from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import InvalidPage, Paginator
-from django.db.models.query import QuerySet
+from django.db.models.query import QuerySet, Q
 from django.db import models
+from django.http import Http404
 from django.views.generic import ListView
 from django.views.generic.edit import ModelFormMixin
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 
@@ -35,7 +35,7 @@ class XView(ListView, ModelFormMixin):
     @property
     def urls(self):
         return [
-            url(r'^{}/(?P<{}>[\w\d-]+)?/?$'.format(self.get_resource_name(), self.pk_url_kwargs), self.__class__.as_view(), name=self.get_url_name()),
+            url(r'{}/(?P<{}>[\w\d-]+)?/?$'.format(self.get_resource_name(), self.pk_url_kwargs), self.__class__.as_view(), name=self.get_url_name()),
         ]
 
     def get_resource_name(self):
@@ -49,10 +49,15 @@ class XView(ListView, ModelFormMixin):
             return None
 
     def get_url_name(self):
-        return self.get_resource_name()+'-manager'
+        return self.get_resource_name() + '-manager'
+
+    def get_success_url(self):
+        return reverse(self.get_url_name())
 
     def get_list(self, request, *args, **kwargs):
+
         print("Get object list")
+        print(kwargs)
         self.object_list = self.get_queryset()
         allow_empty = self.get_allow_empty()
 
@@ -69,6 +74,8 @@ class XView(ListView, ModelFormMixin):
                     'class_name': self.__class__.__name__,
                 })
         context = self.get_context_data(**kwargs)
+        context['detail_url_prefix'] = reverse(self.get_url_name())
+        context['new_detail_url'] = ''.join([reverse(self.get_url_name()), self.detail_add_url_suffix, '/'])
         print(context)
         return self.render_to_response(context)
 
@@ -83,8 +90,6 @@ class XView(ListView, ModelFormMixin):
         context = self.get_context_data(**kwargs)
         context.update({'form': form})
         print(self.object)
-        form_action = reverse(self.get_url_name(), kwargs={'pk':self.object.pk}) if self.object else reverse(self.get_url_name())
-        context.update({'form_action':form_action})
 
         print(context)
         return self.render_to_response(context)
@@ -139,7 +144,10 @@ class XView(ListView, ModelFormMixin):
             context_object_name = self.get_context_object_name(self.object)
             if context_object_name:
                 context[context_object_name] = self.object
+
+        # Insert the detail template names to context
         context.update({'template': self.get_detail_template_names()})
+
         context.update(kwargs)
         return context
 
@@ -176,8 +184,22 @@ class XView(ListView, ModelFormMixin):
         """
         context = {}
         context['view'] = self
-        context['url_name'] = self.get_url_name()
+        # Insert the url kwargs to context data
         context.update(**kwargs)
+        # Insert the request GET query data into context
+        context.update(**{key: value.strip() for key, value in self.request.GET.dict().items()})
+
+        # Insert the 'form_action' into context
+        # if current request did not related to an object:
+        #   map form_action to post_list to create an object
+        # else:
+        #   map form_action to post_detail to update an object
+        #
+        form_action = reverse(self.get_url_name(), kwargs={'pk': self.object.pk}) if hasattr(self, 'object') and self.object else reverse(self.get_url_name())
+        context.update({'form_action': form_action})
+
+        context.update({'form': self.get_form})
+        # Insert the detail/list context data to context
         extra_context_method = getattr(self, 'get_{}_context_data'.format(self.request_type), None)
         if extra_context_method is not None:
             context.update(**extra_context_method())
@@ -204,7 +226,46 @@ class XView(ListView, ModelFormMixin):
     detail_template_name = None
     list_template_suffix = '_list'
     detail_template_suffix = '_detail'
-    resource_name=None
+    resource_name = None
+    search_key_name = 'q'  # the keyword search name
+    search_fields = []  # the field which can be search by keywords
+    detail_add_url_suffix = 'add'
+
+    def remove_url_keys(self, kwargs):
+        for key in ['page']:
+            if key in kwargs:
+                del kwargs[key]
+
+    def get_queryset(self):
+        """
+        Override to customize list page search action
+        """
+        queryset = super(XView, self).get_queryset()
+        queries = self.request.GET.copy()
+        self.remove_url_keys(queries)
+
+        if not queries:
+            return queryset
+
+        keyword = queries.get(self.search_key_name, '').strip()
+        if keyword:
+            q = Q()
+            for field in self.search_fields:
+                q = Q(**{'{}__icontains'.format(field): keyword}) | q
+            queryset = queryset.filter(q)
+
+        if self.search_key_name in queries:
+            del queries[self.search_key_name]
+        assert self.search_key_name not in queries
+
+        # other fields filter
+        filters = {}
+        for k, v in [(k, v) for k, v in queries.items() if v]:
+            filters[k] = v
+        if filters:
+            queryset = queryset.filter(**filters)
+
+        return queryset
 
     def render_to_response(self, context, **response_kwargs):
         """

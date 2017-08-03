@@ -1,7 +1,8 @@
 <ul class="pagination">
+    <!-- objs is a page instance -->
     {% if objs and objs.has_previous %}
         <li class="prev">
-            <a href="?page={{ objs.previous_page_number }}"><<</a>
+            <a href="?page={{ objs.previous_page_number }}">«</a>
         </li>
     {% endif %}
     {% for page in objs.paginator.page_range %}
@@ -20,4 +21,4 @@
     {% endif %}
 </ul>
 
-<div class="summaryOptions">第<b>{{ objs.start_index}}-{{ objs.end_index}}</b>条，共<b>{{ objs.paginator.count }}</b>条数据.</div>
+<div class="summaryOptions pull-right">第<b>{{ objs.start_index}}-{{ objs.end_index}}</b>条，共<b>{{ objs.paginator.count }}</b>条数据.</div>

@@ -2,7 +2,7 @@
 # @Author: theo-l
 # @Date:   2017-07-10 09:36:44
 # @Last Modified by:   theo-l
-# @Last Modified time: 2017-08-03 05:45:11
+# @Last Modified time: 2017-08-03 09:14:25
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import *
-from common.xviews import XView
+from .xviews import XView
 # Create your views here.
 
 
@@ -20,8 +20,23 @@ class APIManagerView(XView):
     queryset = APIInfo.objects.all()
     context_object_list_name = 'objects'
     fields = '__all__'
-    success_url = '/api_doc/xapi'
-    paginate_by = 5
+    paginate_by = 2
+    ordering = ['created_at']
+    search_fields = ['endpoint']
+
+    def get_context_data(self, **kwargs):
+        """
+        Insert some common context data in the template env
+        """
+        context = super(APIManagerView, self).get_context_data(**kwargs)
+        apps = APP.enables.all()
+        app_resources = []
+        for app in apps:
+            resources = APIInfo.enables.filter(app=app).values_list('resource_name', flat=True).distinct()
+            app_resources.extend(list(resources))
+        data = {'apps': apps, 'resources': app_resources}
+        context.update(**data)
+        return context
 
 
 @csrf_exempt
