@@ -2,7 +2,7 @@
 # @Author: theo-l
 # @Date:   2017-07-10 09:36:44
 # @Last Modified by:   theo-l
-# @Last Modified time: 2017-08-02 21:31:58
+# @Last Modified time: 2017-08-03 05:45:11
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import *
-from .xviews import XView
+from common.xviews import XView
 # Create your views here.
 
 
