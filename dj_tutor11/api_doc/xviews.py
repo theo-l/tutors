@@ -2,9 +2,10 @@
 # @Author: theo-l
 # @Date:   2017-08-01 07:55:46
 # @Last Modified by:   theo-l
-# @Last Modified time: 2017-08-01 12:29:05
+# @Last Modified time: 2017-08-02 22:17:02
 import six
 
+from django.conf.urls import url
 from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import InvalidPage, Paginator
 from django.db.models.query import QuerySet
@@ -14,6 +15,7 @@ from django.views.generic.edit import ModelFormMixin
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext as _
+from django.urls import reverse
 
 
 class XView(ListView, ModelFormMixin):
@@ -29,6 +31,25 @@ class XView(ListView, ModelFormMixin):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
+    @property
+    def urls(self):
+        return [
+            url(r'^{}/(?P<{}>[\w\d-]+)?/?$'.format(self.get_resource_name(), self.pk_url_kwargs), self.__class__.as_view(), name=self.get_url_name()),
+        ]
+
+    def get_resource_name(self):
+        if self.resource_name:
+            return self.resource_name
+        elif self.model:
+            return self.model._meta.model_name
+        elif self.queryset:
+            return self.queryset.model._meta.model_name
+        else:
+            return None
+
+    def get_url_name(self):
+        return self.get_resource_name()+'-manager'
 
     def get_list(self, request, *args, **kwargs):
         print("Get object list")
@@ -52,18 +73,47 @@ class XView(ListView, ModelFormMixin):
         return self.render_to_response(context)
 
     def get_detail(self, request, *args, **kwargs):
+        """
+        User request to create a new object or update an exist object
+        """
         print("Get object detail")
 
         self.object = self.get_object()
         form = self.get_form()
         context = self.get_context_data(**kwargs)
         context.update({'form': form})
+        print(self.object)
+        form_action = reverse(self.get_url_name(), kwargs={'pk':self.object.pk}) if self.object else reverse(self.get_url_name())
+        context.update({'form_action':form_action})
+
         print(context)
         return self.render_to_response(context)
 
+    def get_object(self, queryset=None):
+        """
+        this method is used to check if current request is create or update an object
+        if find object:
+            update an exist object
+        else:
+            create a new object
+        """
+        queryset = queryset or self.get_queryset()
+        try:
+            pk = self.kwargs.get(self.pk_url_kwargs)
+            if pk is None:
+                return None
+            else:
+                if pk in self.new_kwargs:
+                    return None
+                else:
+                    return queryset.filter(pk=pk).get()
+
+        except Exception:
+            return None
+
     def post_list(self, request, *args, **kwargs):
         """
-        View method which will create a new object
+        Request to create a new object
         """
         form = self.get_form()
         if form.is_valid():
@@ -73,7 +123,7 @@ class XView(ListView, ModelFormMixin):
 
     def post_detail(self, request, *args, **kwargs):
         """
-        View method which whill update an exist object
+        Request to update an existed object
         """
         self.object = self.get_object()
         form = self.get_form()
@@ -81,19 +131,6 @@ class XView(ListView, ModelFormMixin):
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
-
-    def get_object(self, queryset=None):
-        queryset = queryset or self.get_queryset()
-        try:
-            pk = self.kwargs.get(self.pk_url_kwargs)
-            if pk is not None:
-                queryset = queryset.filter(pk=pk)
-
-            obj = queryset.get()
-        except Exception:
-            return None
-        else:
-            return obj
 
     def get_detail_context_data(self, **kwargs):
         context = {}
@@ -118,6 +155,8 @@ class XView(ListView, ModelFormMixin):
                 'is_paginated': is_paginated,
                 'object_list': queryset
             }
+            if context_object_name is not None:
+                context[context_object_name] = queryset
         else:
             context = {
                 'paginator': None,
@@ -125,8 +164,8 @@ class XView(ListView, ModelFormMixin):
                 'is_paginated': None,
                 'object_list': queryset
             }
-        if context_object_name is not None:
-            context[context_object_name] = queryset
+            if context_object_name is not None:
+                context[context_object_name] = queryset
         context.update({'template': self.get_list_template_names()})
         context.update(kwargs)
         return context
@@ -136,8 +175,8 @@ class XView(ListView, ModelFormMixin):
         The top level method to prepare context data
         """
         context = {}
-        if 'view' not in context:
-            context['view'] = self
+        context['view'] = self
+        context['url_name'] = self.get_url_name()
         context.update(**kwargs)
         extra_context_method = getattr(self, 'get_{}_context_data'.format(self.request_type), None)
         if extra_context_method is not None:
@@ -165,9 +204,12 @@ class XView(ListView, ModelFormMixin):
     detail_template_name = None
     list_template_suffix = '_list'
     detail_template_suffix = '_detail'
-
+    resource_name=None
 
     def render_to_response(self, context, **response_kwargs):
+        """
+        Override the use the customized template in context to render the resposne result
+        """
         response_kwargs.setdefault('content_type', self.content_type)
         return self.response_class(request=self.request, template=context['template'],
                                    context=context, using=self.template_engine, **response_kwargs)

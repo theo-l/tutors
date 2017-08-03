@@ -12,7 +12,7 @@
 
 
 {% block content %}
-<form action="{% url "app-list" %}" class="navbar-right navbar-form" role="form">
+<form action="{{ form_action }}" class="navbar-right navbar-form" role="form">
     <div class="form-group">
         <input type="text" class="form-control" name="q" value="{% if q %} {{ q }} {% endif %}" placeholder="应用名，资源名，API描述">
     </div>
@@ -57,7 +57,7 @@
             <td>{{ api.resource_name }}</td>
             <td>{{ api.desc }}</td>
             <td>{{ api.get_method }}</td>
-            <td><a href="{% url "app-list" api.pk %}"> {{ api.endpoint }}</a></td>
+            <td><a href="{% url "url_name" api.pk %}"> {{ api.endpoint }}</a></td>
             <td>
             {% if api.is_auth_required %}
                <span class="glyphicon glyphicon-ok" style="color:green"></span>

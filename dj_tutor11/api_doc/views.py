@@ -2,7 +2,7 @@
 # @Author: theo-l
 # @Date:   2017-07-10 09:36:44
 # @Last Modified by:   theo-l
-# @Last Modified time: 2017-08-01 12:12:53
+# @Last Modified time: 2017-08-02 21:31:58
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -21,6 +21,7 @@ class APIManagerView(XView):
     context_object_list_name = 'objects'
     fields = '__all__'
     success_url = '/api_doc/xapi'
+    paginate_by = 5
 
 
 @csrf_exempt
